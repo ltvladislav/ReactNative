@@ -1,5 +1,6 @@
 import React from 'react';
 import {StyleSheet, Text, View, Image, TouchableOpacity, Alert, Modal, TouchableHighlight} from 'react-native';
+import { CheckBox } from 'react-native-elements'; // 0.16.0
 import * as ImagePicker from 'expo-image-picker';
 import Constants from 'expo-constants';
 import * as Permissions from 'expo-permissions';
@@ -13,45 +14,69 @@ import DataBase from "../helpers/DataBase";
 //"CREATE TABLE MilkProduction (Year INTEGER, Quantity FLOAT, QuantitySum FLOAT)"
 import DataBaseTable from "./components/DataBaseTable";
 import Calculator from "../helpers/Calculator";
+import FileDataBase from "../helpers/FileDataBase";
 
 const COLUMN_CAPTIONS = {
     "Year": "Рік",
     "Quantity": "Виробництво",
     "QuantitySum": "Вартість"
 };
-
-const GET_COLUMN_NAMES = () => {
-    let cols = [];
-    for (let key in COLUMN_CAPTIONS) {
-        cols.push(key);
-    }
-    return cols;
-}
-const SHOW_FILTER =  {
-    column: "Quantity",
-    compareType: DataBase.CompareType.MORE_OR_EQUAL,
-    value: 1000
-}
+const COLUMN_NAMES = ["Year", "Quantity", "QuantitySum"]
 
 export default class GalleryScreen extends React.Component {
     state = {
         modalVisible: false,
         rows: [],
-        modalCaption: ""
+        modalCaption: "",
+        isFileDB: true,
+        formValues: {},
+        formMode: DataBaseInsertForm.Mode.INSERT,
+        resetValues: false
     };
     showData() {
         Alert.alert("БД", "БД");
     }
-    insertNew(values, callback, scope) {
-        console.log(values);
-        DataBase.Insert({
+    saveData(values, callback, scope) {
+        if (this.state.formMode === DataBaseInsertForm.Mode.INSERT) {
+            this.insertData(values, callback, scope);
+        } else if (this.state.formMode === DataBaseInsertForm.Mode.UPDATE) {
+            this.updateData(values, callback, scope);
+        }
+    }
+    insertData(values, callback, scope) {
+        let InsertMethod = this.state.isFileDB ? FileDataBase.Insert : DataBase.Insert;
+        InsertMethod({
             dbName: "MobilaDB",
             tableName: "MilkProduction",
             values: values
         }, (result) => {
-            if (result.insertId) {
+            console.log(result);
+            if (result && result.insertId) {
                 Alert.alert("Виконано", "Дані успішно додано");
             }
+            Livlag.callback(callback, null, scope);
+        })
+    }
+    updateData(values, callback, scope) {
+        let UpdateMethod = this.state.isFileDB ? FileDataBase.Update : DataBase.Update;
+        let CompareType = this.state.isFileDB ? FileDataBase.CompareType : DataBase.CompareType;
+        UpdateMethod({
+            dbName: "MobilaDB",
+            tableName: "MilkProduction",
+            values: values,
+            filter: {
+                column: "Year",
+                compareType: CompareType.EQUAL,
+                value: values["Year"]
+            }
+        }, (result) => {
+            console.log(result);
+            if (result && result.rowsAffected) {
+                Alert.alert("Виконано", "Дані успішно оновлено");
+            }
+            this.setState({
+                formMode: DataBaseInsertForm.Mode.INSERT
+            });
             Livlag.callback(callback, null, scope);
         })
     }
@@ -59,34 +84,41 @@ export default class GalleryScreen extends React.Component {
         this.showRecords();
     }
     showFilterRecords() {
-        this.showRecords(SHOW_FILTER);
+        let CompareType = this.state.isFileDB ? FileDataBase.CompareType : DataBase.CompareType;
+        let filter = {
+            column: "Quantity",
+            compareType: CompareType.MORE_OR_EQUAL,
+            value: 1000
+        }
+        this.showRecords(filter);
     }
     showRecords(filter) {
-
-        let columns = GET_COLUMN_NAMES();
 
         let config = {
             dbName: "MobilaDB",
             tableName: "MilkProduction",
-            columns: columns,
+            columns: COLUMN_NAMES,
             order: {
                 column: "Year"
             },
             filter: filter
         };
-
-        DataBase.Select(config, function(result) {
+        let SelectMethod = this.state.isFileDB ? FileDataBase.Select : DataBase.Select;
+        SelectMethod(config, function(array) {
+            if (!array) {
+                Alert.alert("Пусто", "Немає даних для відображення");
+                return;
+            }
             let rows = [];
-            let array = result.rows._array;
             let captions = [];
-            for (let key in columns) {
-                captions.push(COLUMN_CAPTIONS[columns[key]]);
+            for (let i = 0; i < COLUMN_NAMES.length; i++) {
+                captions.push(COLUMN_CAPTIONS[COLUMN_NAMES[i]]);
             }
             rows.push(captions);
             for (let i = 0; i < array.length; i++) {
                 let values = [];
-                for (let key in columns) {
-                    values.push(array[i][columns[key]]);
+                for (let j = 0; j < COLUMN_NAMES.length; j++) {
+                    values.push(array[i][COLUMN_NAMES[j]]);
                 }
                 rows.push(values);
             }
@@ -98,25 +130,62 @@ export default class GalleryScreen extends React.Component {
         }, this);
     }
     showAvgQuantity() {
+        let AggregationFunction = this.state.isFileDB ? FileDataBase.AggregationFunction : DataBase.AggregationFunction;
         let config = {
             dbName: "MobilaDB",
             tableName: "MilkProduction",
             columns: {
-                function: DataBase.AggregationFunction.AVG,
+                function: AggregationFunction.AVG,
                 column: "Quantity",
                 alias: "AvgQuantity"
             }
         };
 
-        DataBase.Select(config, function(result) {
-            let avgRes = result.rows._array[0]["AvgQuantity"];
+        let SelectMethod = this.state.isFileDB ? FileDataBase.Select : DataBase.Select;
+        SelectMethod(config, function(result) {
+            let avgRes = result[0]["AvgQuantity"];
             avgRes = Calculator.roundToDec(avgRes, 3);
             Alert.alert("Обчислено", "Середньорічне виробництво - " + avgRes);
         }, this);
     }
 
-    render() {
+    listRowClick(itemArray) {
+        let item = {};
+        for (let i = 0; i < COLUMN_NAMES.length; i++) {
+            item[COLUMN_NAMES[i]] = itemArray[i];
+        }
+        this.setState({
+            formValues: item,
+            modalVisible: false,
+            formMode: DataBaseInsertForm.Mode.UPDATE,
+            resetValues: true
+        });
 
+    }
+
+    sendFormValues() {
+        let formValues = [];
+
+        for (let key in COLUMN_CAPTIONS) {
+            formValues.push({
+                name: key,
+                caption: COLUMN_CAPTIONS[key],
+                value: this.state.formValues[key] || ""
+            });
+        }
+        let isReset = this.state.resetValues;
+        if (isReset) {
+            this.setState({
+                resetValues: false
+            })
+        }
+        return {
+            fields: formValues,
+            resetValues: this.state.resetValues
+        };
+    }
+
+    render() {
         return (
             <View style={styles.container}>
 
@@ -126,8 +195,8 @@ export default class GalleryScreen extends React.Component {
                     <Text style={styles.button} >БД</Text>
                 </TouchableOpacity>
                 <DataBaseInsertForm
-                    saveCallback={this.insertNew.bind(this)}
-                    values={this.state.values}
+                    saveCallback={this.saveData.bind(this)}
+                    getFieldsMethod={this.sendFormValues.bind(this)}
                 />
                 <TouchableHighlight
                     onPress={() => {
@@ -150,6 +219,12 @@ export default class GalleryScreen extends React.Component {
                     <Text>Показати середньорічне виробництво</Text>
                 </TouchableHighlight>
 
+                <CheckBox
+                    title="Режим файлової системи"
+                    checked={this.state.isFileDB}
+                    onPress={() => this.setState({ isFileDB: !this.state.isFileDB })}
+                />
+
                 <Modal
                     animationType="slide"
                     transparent={false}
@@ -162,6 +237,7 @@ export default class GalleryScreen extends React.Component {
                         <Text style={styles.marginBottom}>{this.state.modalCaption}</Text>
                         <DataBaseTable
                             rows={this.state.rows}
+                            rowClickAction={this.listRowClick.bind(this)}
                         />
                     </View>
                 </Modal>

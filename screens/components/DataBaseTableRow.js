@@ -6,13 +6,34 @@ export default class TableRow extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            values: props.values
+            values: props.values,
+            rowClickAction: props.rowClickAction
         }
     }
 
     render() {
         let cellWidth = this.state.values.length ?
             (90 / this.state.values.length) : 90;
+
+        if (this.state.rowClickAction) {
+            return (
+                <View>
+                    <TouchableOpacity
+                        onPress={() => {
+                            this.state.rowClickAction(this.state.values)
+                        }}
+                        style={styles.row}
+                    >
+                        {
+                            this.state.values.map(item => (
+                                <View style={styles.cell} style={{width: `${cellWidth}%`}}><Text>{item}</Text></View>
+                            ))
+                        }
+                    </TouchableOpacity>
+                </View>
+            );
+        }
+
         return (
             <View style={styles.row}>
                 {

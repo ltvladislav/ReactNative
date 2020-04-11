@@ -41,4 +41,10 @@ export default class Livlag {
             callback(args);
         }
     }
+
+    static each(value, callback, scope) {
+        for (let key in value) {
+            Livlag.callback(callback, [value[key], key], scope);
+        }
+    }
 }

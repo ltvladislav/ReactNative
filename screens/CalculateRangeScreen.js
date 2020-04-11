@@ -43,6 +43,7 @@ export default class CalculateRangeScreen extends React.Component {
                 argF: Calculator.getFunctionResult(i, this.state.argY)
             });
         }
+        
 
         return (
             <View style={styles.container}>

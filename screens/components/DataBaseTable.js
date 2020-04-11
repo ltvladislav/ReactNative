@@ -6,7 +6,8 @@ export default class TableRow extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            rows: props.rows
+            rows: props.rows,
+            rowClickAction: props.rowClickAction
         }
     }
 
@@ -18,6 +19,7 @@ export default class TableRow extends React.Component {
                         <DataBaseTableRow
                             key={index}
                             values={row}
+                            rowClickAction={this.state.rowClickAction}
                         />
                     ))
                 }

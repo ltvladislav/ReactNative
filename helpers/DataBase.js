@@ -8,11 +8,11 @@ export default class DataBase {
 
         let db = SQLite.openDatabase(dbName);
         db.transaction((ts) => {
-            console.log(queryConfig.sqlText);
             ts.executeSql(queryConfig.sqlText, queryConfig.arguments || [], (config, res) => {
-                Livlag.callback(callback, res, scope);
+                let selectArray = queryConfig.isSelect  && res && res.rows && res.rows._array;
+                let answer = selectArray || res;
+                Livlag.callback(callback, [answer], scope);
             }, (error) => {
-                console.log(error);
                 DataBase._executeError(queryConfig.sqlText);
             })
         }, (error) => {
@@ -27,9 +27,9 @@ export default class DataBase {
     }
 
     static Insert(config, callback, scope) {
-        DataBase.Execute(config.dbName, DataBase._getInsertConfig(config.tableName, config.values), callback, scope);
+        DataBase.Execute(config.dbName, DataBase._getInsertSql(config.tableName, config.values), callback, scope);
     }
-    static _getInsertConfig(tableName, values) {
+    static _getInsertSql(tableName, values) {
         let exists = false;
         let columnsArr = [];
         let valuesArr = [];
@@ -48,19 +48,42 @@ export default class DataBase {
         }
     }
 
+    static Update(config, callback, scope) {
+        DataBase.Execute(config.dbName, DataBase._getUpdateSql(config.tableName, config.values, config), callback, scope);
+    }
+    static _getUpdateSql(tableName, values, config) {
+        let exists = false;
+        let columnsArr = [];
+        let valuesArr = [];
+        for (let key in values) {
+            exists = true;
+            columnsArr.push(`${key} = ?`);
+            valuesArr.push(values[key]);
+        }
+        if (!exists) {
+            throw new Error("Відсутні значення для оновлення");
+        }
+
+        return {
+            sqlText: `UPDATE ${tableName} SET ${columnsArr.join(', ')}` +
+                DataBase._getFilterSql(config.filter),
+            arguments: valuesArr
+        }
+    }
 
     static Select(config, callback, scope) {
         DataBase.Execute(
             config.dbName,
-            DataBase._getSelectConfig(config.tableName, config.columns, config),
+            DataBase._getSelectSql(config.tableName, config.columns, config),
             callback, scope
         );
     }
-    static _getSelectConfig(tableName, columns, config) {
+    static _getSelectSql(tableName, columns, config) {
         return {
             sqlText: `SELECT ${DataBase._getColumnsSql(columns)} FROM ${tableName}` +
                 DataBase._getFilterSql(config.filter) +
-                DataBase._getOrderSql(config.order)
+                DataBase._getOrderSql(config.order),
+            isSelect: true
         }
     }
 
@@ -94,7 +117,7 @@ DataBase.CompareType = {
     MORE: ">",
     MORE_OR_EQUAL: ">=",
     LESS: "<",
-    LESS_OR_EQUAL: "<=>"
+    LESS_OR_EQUAL: "<="
 }
 
 DataBase.AggregationFunction = {
