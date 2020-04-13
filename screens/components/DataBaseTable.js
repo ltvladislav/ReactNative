@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyleSheet, TextInput, View, Button, Text, TouchableOpacity, Alert} from 'react-native';
+import {StyleSheet, TextInput, View, Button, Text, TouchableOpacity, Alert, ScrollView} from 'react-native';
 import DataBaseTableRow from "./DataBaseTableRow";
 
 export default class TableRow extends React.Component {
@@ -13,7 +13,7 @@ export default class TableRow extends React.Component {
 
     render() {
         return (
-            <View>
+            <ScrollView>
                 {
                     this.state.rows.map((row, index) => (
                         <DataBaseTableRow
@@ -23,7 +23,7 @@ export default class TableRow extends React.Component {
                         />
                     ))
                 }
-            </View>
+            </ScrollView>
         );
     }
 }

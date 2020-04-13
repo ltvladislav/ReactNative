@@ -8,6 +8,8 @@ import CalculateRangeScreen from "../screens/CalculateRangeScreen";
 import CalculateChartScreen from "../screens/CalculateChartScreen";
 import GalleryScreen from "../screens/GalleryScreen";
 import DataBaseScreen from "../screens/DataBaseScreen";
+import ContactsScreen from "../screens/ContactsScreen";
+
 
 const _About = createStackNavigator({
     About: {
@@ -53,6 +55,14 @@ const _DataBase = createStackNavigator({
         }
     }
 })
+const _Contacts = createStackNavigator({
+    Contacts: {
+        screen: ContactsScreen,
+        navigationOptions: {
+            title: "Контакти"
+        }
+    }
+})
 
 const AppNavigator = createBottomTabNavigator({
     About: {
@@ -78,9 +88,15 @@ const AppNavigator = createBottomTabNavigator({
         navigationOptions: {
             title: "БД"
         }
+    },
+    Contacts: {
+        screen: _Contacts,
+        navigationOptions: {
+            title: "Контакти"
+        }
     }
 }, {
-    initialRouteName: "DataBase"
+    initialRouteName: "Contacts"
 });
 
 export default createAppContainer(AppNavigator)
