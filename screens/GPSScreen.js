@@ -1,10 +1,5 @@
 import React, { useEffect } from 'react';
 import {StyleSheet, Text, View, Image, TouchableOpacity, Alert, Modal, TouchableHighlight} from 'react-native';
-import * as Contacts from 'expo-contacts';
-import * as Permissions from "expo-permissions";
-import DataBaseTable from "./components/DataBaseTable";
-import FileDataBase from "../helpers/FileDataBase";
-import DataBase from "../helpers/DataBase";
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 
@@ -34,10 +29,15 @@ export default class GPSScreen extends React.Component {
         if (status !== 'granted') {
             alert('Sorry, we need camera roll permissions to make this work!');
         }
+    }
+    gpsStart() {
         Location.startLocationUpdatesAsync("MOBILA_GEO_TASK", {
             accuracy: Location.Accuracy.High,
             distanceInterval: 1
         });
+    }
+    goToMap = () => {
+        this.state.navigation.navigate("Map");
     }
 
     render() {
@@ -49,8 +49,16 @@ export default class GPSScreen extends React.Component {
                     alignItems: 'center',
                     justifyContent: 'center',
                 }}>
-
-                <Text>GPS</Text>
+                <TouchableOpacity
+                    onPress={this.gpsStart}
+                >
+                    <Text>GPS</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    onPress={this.goToMap}
+                >
+                    <Text>Map</Text>
+                </TouchableOpacity>
             </View>
         );
     }

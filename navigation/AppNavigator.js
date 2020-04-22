@@ -69,13 +69,13 @@ const _GPS = createStackNavigator({
     GPS: {
         screen: GPSScreen,
         navigationOptions: {
-            title: "Контакти"
+            title: "GPS"
         }
     },
     Map: {
         screen: MapScreen,
         navigationOptions: {
-            title: "Контакти"
+            title: "Map"
         }
     }
 })
