@@ -9,6 +9,8 @@ import CalculateChartScreen from "../screens/CalculateChartScreen";
 import GalleryScreen from "../screens/GalleryScreen";
 import DataBaseScreen from "../screens/DataBaseScreen";
 import ContactsScreen from "../screens/ContactsScreen";
+import GPSScreen from "../screens/GPSScreen";
+import MapScreen from "../screens/MapScreen"
 
 
 const _About = createStackNavigator({
@@ -63,6 +65,23 @@ const _Contacts = createStackNavigator({
         }
     }
 })
+const _GPS = createStackNavigator({
+    GPS: {
+        screen: GPSScreen,
+        navigationOptions: {
+            title: "Контакти"
+        }
+    },
+    Map: {
+        screen: MapScreen,
+        navigationOptions: {
+            title: "Контакти"
+        }
+    }
+})
+
+
+
 
 const AppNavigator = createBottomTabNavigator({
     About: {
@@ -94,9 +113,15 @@ const AppNavigator = createBottomTabNavigator({
         navigationOptions: {
             title: "Контакти"
         }
+    },
+    GPS: {
+        screen: _GPS,
+        navigationOptions: {
+            title: "GPS"
+        }
     }
 }, {
-    initialRouteName: "Contacts"
+    initialRouteName: "GPS"
 });
 
 export default createAppContainer(AppNavigator)
