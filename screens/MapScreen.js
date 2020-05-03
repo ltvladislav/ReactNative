@@ -106,10 +106,42 @@ export default class MapScreen extends React.Component {
         return '';
     }
 
+    setAddress(value) {
+        this.setState({
+            address: value,
+            customLatintude: "",
+            customLongitude: ""
+        });
+    }
+    async searchAddress() {
+        let location = await Location.geocodeAsync(this.state.address);
+        if (!location.length) {
+            Alert.alert("Помилка", "Не знайдено");
+            return;
+        }
+        let marker = {
+            latlng: MapScreen.getLatLngFromAddress(location[0]),
+            title: this.state.address,
+            description: ""
+        };
+        this.setState({
+            marker: marker,
+            region: MapScreen.getRegion(marker),
+            customLatintude: "",
+            customLongitude: ""
+        });
+    }
+    static getLatLngFromAddress(location) {
+        return {
+            latitude: location.latitude,
+            longitude: location.longitude
+        }
+    }
+
     render() {
         console.log("RENDER");
         return (
-<ScrollView>
+        <ScrollView>
             <View style={styles.containerBetween}>
                 <MapView
                     region={this.state.region}
@@ -137,13 +169,25 @@ export default class MapScreen extends React.Component {
                     <View style={styles.row}>
                         <Text>Longitude : </Text>
                         <TextInput style={styles.input} value={this.getAttributeValue('customLongitude')}
-                        onChangeText={(value) => {
-                            this.setCoordinates({lng: +value});
-                        }}/>
+                                   onChangeText={(value) => {
+                                       this.setCoordinates({lng: +value});
+                                   }}/>
                     </View>
+                    <View style={styles.row}>
+                        <Text>Address : </Text>
+                        <TextInput style={styles.input} value={this.getAttributeValue('address')}
+                                   onChangeText={(value) => {
+                                       this.setAddress(value);
+                                   }}/>
+                    </View>
+                    <TouchableOpacity
+                        onPress={this.searchAddress.bind(this)}
+                    >
+                        <Text>Знайти адресу</Text>
+                    </TouchableOpacity>
                 </View>
             </View>
-</ScrollView>
+        </ScrollView>
         );
     }
 }
@@ -163,7 +207,7 @@ const styles = StyleSheet.create({
     },
     mapStyle: {
         width: Dimensions.get('window').width,
-        height: Dimensions.get('window').height - 200,
+        height: Dimensions.get('window').height - 250,
     },
     row: {
         flexDirection: 'row',
