@@ -2,6 +2,8 @@ import { createAppContainer } from "react-navigation";
 import { createBottomTabNavigator } from "react-navigation-tabs";
 import { createStackNavigator} from "react-navigation-stack";
 
+import Livlag from "../helpers/Livlag";
+
 import AboutScreen from "../screens/AboutScreen";
 import CalculateScreen from "../screens/CalculateScreen";
 import CalculateRangeScreen from "../screens/CalculateRangeScreen";
@@ -11,116 +13,119 @@ import DataBaseScreen from "../screens/DataBaseScreen";
 import ContactsScreen from "../screens/ContactsScreen";
 import GPSScreen from "../screens/GPSScreen";
 import MapScreen from "../screens/MapScreen"
+import HofmanScreen from "../screens/HofmanScreen";
 
 
-const _About = createStackNavigator({
-    About: {
-        screen: AboutScreen,
-        navigationOptions: {
-            title: "Про автора"
-        }
-    }
-})
-const _Calculate = createStackNavigator({
-    Calculate: {
-        screen: CalculateScreen,
-        navigationOptions: {
-            title: "Розрахунок"
-        }
+const Screens = [
+    {
+        name: 'About',
+        title: "Про автора",
+        screen: AboutScreen
     },
-    CalculateRange: {
-        screen: CalculateRangeScreen,
-        navigationOptions: {
-            title: "Розрахунок проміжку"
+    [
+        {
+            name: "Calculate",
+            title: "Розрахунок",
+            screen: CalculateScreen,
+            hide: true
+        },
+        {
+            name: "CalculateRange",
+            title: "Розрахунок проміжку",
+            screen: CalculateRangeScreen,
+            hide: true
+        },
+        {
+            name: "CalculateChart",
+            title: "Графік функції",
+            screen: CalculateChartScreen,
+            hide: true
         }
-    },
-    CalculateChart: {
-        screen: CalculateChartScreen,
-        navigationOptions: {
-            title: "Графік функції"
-        }
-    }
-})
-const _Gallery = createStackNavigator({
-    Gallery: {
+    ],
+    {
+        name: "Gallery",
+        title: "Галерея",
         screen: GalleryScreen,
-        navigationOptions: {
-            title: "Галерея"
-        }
-    }
-})
-const _DataBase = createStackNavigator({
-    DataBase: {
-        screen: DataBaseScreen,
-        navigationOptions: {
-            title: "БД"
-        }
-    }
-})
-const _Contacts = createStackNavigator({
-    Contacts: {
+        hide: true
+    },
+    {
+        name: "DataBase",
+        title: "БД",
+        screen: DataBaseScreen
+    },
+    {
+        name: "Contacts",
+        title: "Контакти",
         screen: ContactsScreen,
-        navigationOptions: {
-            title: "Контакти"
+        hide: true
+    },
+    [
+        {
+            name: "GPS",
+            title: "GPS",
+            screen: GPSScreen
+        },
+        {
+            name: "Map",
+            title: "Map",
+            screen: MapScreen
+        }
+    ],
+    {
+        name: "Hofman",
+        title: "Кодування",
+        screen: HofmanScreen
+    }
+];
+
+function getInnerNavigator(value) {
+    let config = {};
+    if (value instanceof Array) {
+        for (let i = 0; i < value.length; i++) {
+            if (!value[i].hide) {
+                config[value[i].name] = {
+                    screen: value[i].screen,
+                    navigationOptions: {
+                        title: value[i].title
+                    }
+                }
+            }
         }
     }
-})
-const _GPS = createStackNavigator({
-    GPS: {
-        screen: GPSScreen,
-        navigationOptions: {
-            title: "GPS"
-        }
-    },
-    Map: {
-        screen: MapScreen,
-        navigationOptions: {
-            title: "Map"
+    else {
+        if (!value.hide) {
+            config[value.name] = {
+                screen: value.screen,
+                navigationOptions: {
+                    title: value.title
+                }
+            }
         }
     }
-})
+    return Livlag.objectIsEmpty(config) ? null : createStackNavigator(config);
+}
+function getNavConfig() {
+    let config = {};
+    for (let i = 0; i < Screens.length; i++) {
+        let value = Screens[i];
+        let firstValue = (value instanceof Array) ? value[0] : value;
+
+        let screenConfig = getInnerNavigator(value);
+        if (screenConfig) {
+            config[firstValue.name] = {
+                screen: getInnerNavigator(value),
+                navigationOptions: {
+                    title: firstValue.title
+                }
+            }
+        }
 
 
-
-
-const AppNavigator = createBottomTabNavigator({
-    About: {
-        screen: _About,
-        navigationOptions: {
-            title: "Про автора"
-        }
-    },
-    Calculate: {
-        screen: _Calculate,
-        navigationOptions: {
-            title: "Розрахунок"
-        }
-    },
-    Gallery: {
-        screen: _Gallery,
-        navigationOptions: {
-            title: "Галерея"
-        }
-    },
-    DataBase: {
-        screen: _DataBase,
-        navigationOptions: {
-            title: "БД"
-        }
-    },
-    Contacts: {
-        screen: _Contacts,
-        navigationOptions: {
-            title: "Контакти"
-        }
-    },
-    GPS: {
-        screen: _GPS,
-        navigationOptions: {
-            title: "GPS"
-        }
     }
-}, {
+    return config;
+}
+
+const AppNavigator = createBottomTabNavigator(getNavConfig(), {
     initialRouteName: "GPS"
 });
 
