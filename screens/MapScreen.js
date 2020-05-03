@@ -15,8 +15,10 @@ import {
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import MapView, { Marker } from 'react-native-maps';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import MapViewDirections from "react-native-maps-directions";
 
+const GOOGLE_MAPS_APIKEY = "AIzaSyCpGlb7OvqiPwCftfQpJY3MMvO_CNQuMmo";
 
 const UNIVER = {
     latlng: {
@@ -37,7 +39,9 @@ export default class MapScreen extends React.Component {
             marker: UNIVER,
             region: MapScreen.getRegion(UNIVER),
             customLatintude: "",
-            customLongitude: ""
+            customLongitude: "",
+            distance: 0,
+            currentMarker: UNIVER.latlng
         }
     }
     componentDidMount() {
@@ -59,10 +63,11 @@ export default class MapScreen extends React.Component {
             description: ""
         };
         this.setState({
-            marker: marker,
-            region: MapScreen.getRegion(marker),
+            //marker: marker,
+            //region: MapScreen.getRegion(marker),
             customLatintude: "",
-            customLongitude: ""
+            customLongitude: "",
+            currentMarker: marker.latlng
         });
     }
     static getLatLngFromLocation(location) {
@@ -152,6 +157,16 @@ export default class MapScreen extends React.Component {
                         title={this.state.marker.title}
                         description={this.state.marker.description}
                     />
+                    <MapViewDirections
+                        origin={this.state.currentMarker}
+                        destination={this.state.marker.latlng}
+                        apikey={GOOGLE_MAPS_APIKEY}
+                        strokeWidth={3}
+                        strokeColor="hotpink"
+                        onReady={(result) => {
+                            this.setState({ distance: result.distance });
+                        }}
+                    />
                 </MapView>
                 <View style={styles.container}>
                     <TouchableOpacity
@@ -180,11 +195,16 @@ export default class MapScreen extends React.Component {
                                        this.setAddress(value);
                                    }}/>
                     </View>
+
                     <TouchableOpacity
                         onPress={this.searchAddress.bind(this)}
                     >
                         <Text>Знайти адресу</Text>
                     </TouchableOpacity>
+
+                    <View style={styles.row}>
+                        <Text>Відстань : {this.state.distance}</Text>
+                    </View>
                 </View>
             </View>
         </ScrollView>
@@ -207,7 +227,7 @@ const styles = StyleSheet.create({
     },
     mapStyle: {
         width: Dimensions.get('window').width,
-        height: Dimensions.get('window').height - 250,
+        height: Dimensions.get('window').height - 260,
     },
     row: {
         flexDirection: 'row',
